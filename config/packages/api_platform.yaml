@@ -1,0 +1,13 @@
+api_platform:
+    title: ECOM API
+    version: 1.0.0
+    defaults:
+        stateless: true
+        cache_headers:
+            vary: ['Content-Type', 'Authorization', 'Origin']
+        pagination_items_per_page: 50
+    formats:
+        jsonld: ['application/ld+json']
+        json: [ 'application/json' ]
+    swagger:
+        versions: [ 3 ]

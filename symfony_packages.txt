@@ -1,0 +1,24 @@
+composer require symfony/orm-pack
+composer require symfony/monolog-bundle
+composer require symfony/validator
+composer require symfony/mailer
+composer require symfony/messenger
+composer require symfony/scheduler
+composer require symfony/notifier
+composer require symfony/serializer-pack
+composer require symfony/translation
+composer require symfony/security-bundle
+composer require symfony/http-client
+composer require symfony/expression-language
+composer require symfony/workflow
+composer require symfony/uid
+composer require symfony/object-mapper
+composer require lexik/jwt-authentication-bundle
+composer require gesdinet/jwt-refresh-token-bundle
+composer require nelmio/cors-bundle
+composer require liip/imagine-bundle
+
+
+------- DEV -------------
+composer require --dev symfony/maker-bundle
+composer require --dev symfony/test-pack
