@@ -1,19 +1,24 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Shared\Tenant;
 
 final class TenantContext
 {
-    public function __construct(private ?string $tenantId = null)
-    {
-    }
+    private ?TenantId $tenantId;
 
-    public function set(string $tenantId): void
+    public function __construct(?TenantId $tenantId = null)
     {
         $this->tenantId = $tenantId;
     }
 
-    public function get(): string
+    public function set(TenantId $tenantId): void
+    {
+        $this->tenantId = $tenantId;
+    }
+
+    public function get(): TenantId
     {
         if (!$this->tenantId) {
             throw new \LogicException('Tenant not resolved');
@@ -24,6 +29,6 @@ final class TenantContext
 
     public function has(): bool
     {
-        return (bool) $this->tenantId;
+        return null !== $this->tenantId;
     }
 }

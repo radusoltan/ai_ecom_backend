@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Infrastructure\API;
+declare(strict_types=1);
+
+namespace App\Infrastructure\Http\ResponseEnvelope;
 
 use App\Shared\Tenant\TenantContext;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
@@ -8,7 +10,7 @@ use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 
 #[AsEventListener(event: KernelEvents::RESPONSE)]
-final class ResponseEnvelopeSubscriber
+final class ResponseEnvelopeListener
 {
     public function __construct(private TenantContext $context)
     {
@@ -26,14 +28,12 @@ final class ResponseEnvelopeSubscriber
             return;
         }
         $data = json_decode($content, true);
-        if (!is_array($data)) {
+        if (!\is_array($data)) {
             return;
         }
-        if (!isset($data['meta']) || !is_array($data['meta'])) {
-            $data['meta'] = [];
-        }
+        $data['meta'] = $data['meta'] ?? [];
         if ($this->context->has()) {
-            $data['meta']['tenant_id'] = $this->context->get();
+            $data['meta']['tenant_id'] = $this->context->get()->toString();
         }
         $response->setContent(json_encode($data));
     }

@@ -22,4 +22,3 @@ services:
         tags: ['monolog.processor']
     App\Shared\Tenant\TenantContext:
         public: true
-        shared: false
