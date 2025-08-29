@@ -1,24 +1,27 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Functional;
 
-use App\Infrastructure\Http\TenantContextListener;
-use App\Infrastructure\API\ResponseEnvelopeSubscriber;
+use App\Infrastructure\Http\ResponseEnvelope\ResponseEnvelopeListener;
+use App\Infrastructure\Http\Subscriber\TenantRequestSubscriber;
 use App\Infrastructure\Persistence\Doctrine\Filter\TenantFilter;
+use App\Infrastructure\Security\TenantResolver;
 use App\Shared\Tenant\TenantContext;
-use App\Shared\Tenant\TenantResolver;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Query\FilterCollection;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
-use Psr\Log\NullLogger;
+use Symfony\Component\Uid\Uuid;
 
-class TenantContextListenerTest extends TestCase
+class TenantRequestSubscriberTest extends TestCase
 {
     private function handleRequest(string $tenantId, Request $request): array
     {
@@ -41,7 +44,7 @@ class TenantContextListenerTest extends TestCase
         $em->method('getFilters')->willReturn($filters);
         $em->method('getConnection')->willReturn($conn);
 
-        $listener = new TenantContextListener($resolver, $context, $em, $conn, new NullLogger());
+        $listener = new TenantRequestSubscriber($resolver, $context, $em, $conn, new NullLogger());
 
         $kernel = $this->createMock(HttpKernelInterface::class);
         $event = new RequestEvent($kernel, $request, HttpKernelInterface::MAIN_REQUEST);
@@ -50,25 +53,26 @@ class TenantContextListenerTest extends TestCase
         return [$context, $tenantFilter];
     }
 
-    public function test_tenant_context_and_response_envelope(): void
+    public function testTenantContextAndResponseEnvelope(): void
     {
         $request = new Request([], [], [], [], [], ['HTTP_AUTHORIZATION' => 'Bearer token']);
-        [$context, $filter] = $this->handleRequest('tenantA', $request);
+        $uuid = Uuid::v4()->toRfc4122();
+        [$context, $filter] = $this->handleRequest($uuid, $request);
 
         self::assertTrue($context->has());
-        self::assertSame('tenantA', $context->get());
+        self::assertSame($uuid, $context->get()->toString());
 
         $response = new JsonResponse(['status' => 'ok', 'data' => null, 'meta' => [], 'errors' => []]);
         $kernel = $this->createMock(HttpKernelInterface::class);
         $event = new ResponseEvent($kernel, $request, HttpKernelInterface::MAIN_REQUEST, $response);
-        $subscriber = new ResponseEnvelopeSubscriber($context);
+        $subscriber = new ResponseEnvelopeListener($context);
         $subscriber($event);
 
         $data = json_decode($response->getContent(), true);
-        self::assertSame('tenantA', $data['meta']['tenant_id']);
+        self::assertSame($uuid, $data['meta']['tenant_id']);
     }
 
-    public function test_missing_tenant_throws_exception(): void
+    public function testMissingTenantThrowsException(): void
     {
         $request = new Request();
         $context = new TenantContext();
@@ -79,11 +83,11 @@ class TenantContextListenerTest extends TestCase
         $resolver = new TenantResolver($tenantRepo, $apiRepo, $jwt);
         $conn = $this->createMock(Connection::class);
         $em = $this->createMock(EntityManagerInterface::class);
-        $listener = new TenantContextListener($resolver, $context, $em, $conn, new NullLogger());
+        $listener = new TenantRequestSubscriber($resolver, $context, $em, $conn, new NullLogger());
         $kernel = $this->createMock(HttpKernelInterface::class);
         $event = new RequestEvent($kernel, $request, HttpKernelInterface::MAIN_REQUEST);
 
-        $this->expectException(\DomainException::class);
+        $this->expectException(\Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException::class);
         $listener($event);
     }
 }
