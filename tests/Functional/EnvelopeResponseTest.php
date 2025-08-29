@@ -4,81 +4,107 @@ declare(strict_types=1);
 
 namespace App\Tests\Functional;
 
-use App\Infrastructure\API\EnvelopeExceptionSubscriber;
-use App\Infrastructure\API\EnvelopeResponseSubscriber;
-use App\Infrastructure\API\GraphQl\ExtensionsMetaBuilder;
-use App\Infrastructure\API\RequestMetaFactory;
-use App\Shared\Tenant\TenantContext;
+use App\Shared\Http\EnvelopeResponseSubscriber;
+use App\Shared\Http\RequestMetaFactory;
+use ApiPlatform\State\Pagination\PaginatorInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Event\ViewEvent;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
+use Symfony\Component\HttpKernel\KernelInterface;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\ConstraintViolation;
+use Symfony\Component\Validator\ConstraintViolationList;
+use Symfony\Component\Validator\Exception\ValidationFailedException;
 
 final class EnvelopeResponseTest extends TestCase
 {
-    public function testRestEnvelope(): void
+    private function createFactory(Request $request): EnvelopeResponseSubscriber
+    {
+        $stack = new RequestStack();
+        $stack->push($request);
+        $factory = new RequestMetaFactory($stack);
+        return new EnvelopeResponseSubscriber($factory, true);
+    }
+
+    public function testSuccessEnvelope(): void
     {
         $request = new Request();
         $request->setRequestFormat('json');
-        $stack = new RequestStack();
-        $stack->push($request);
-        $factory = new RequestMetaFactory($stack, new TenantContext());
-        $subscriber = new EnvelopeResponseSubscriber($factory);
+        $request->attributes->set('tenant_id', 't1');
+        $subscriber = $this->createFactory($request);
 
         $kernel = $this->createMock(HttpKernelInterface::class);
         $event = new ViewEvent($kernel, $request, HttpKernelInterface::MAIN_REQUEST, ['foo' => 'bar']);
-        $subscriber($event);
-
-        $data = json_decode($event->getResponse()->getContent(), true);
-        self::assertSame('success', $data['status']);
-        self::assertSame('bar', $data['data']['foo']);
-        self::assertArrayHasKey('request_id', $data['meta']);
-        self::assertSame([], $data['errors']);
+        $subscriber->onView($event);
+        $payload = json_decode($event->getResponse()->getContent(), true);
+        self::assertSame('success', $payload['status']);
+        self::assertSame('bar', $payload['data']['foo']);
+        self::assertArrayHasKey('timestamp', $payload['meta']);
+        self::assertArrayHasKey('request_id', $payload['meta']);
+        self::assertSame('t1', $payload['meta']['tenant_id']);
+        self::assertSame([], $payload['errors']);
     }
 
-    public function testGraphqlExtensionsMeta(): void
+    public function testPaginationEnvelope(): void
     {
-        if (!class_exists(\ApiPlatform\GraphQl\GraphQlOperation::class)) {
-            self::markTestSkipped('GraphQL component not installed');
+        if (!interface_exists(PaginatorInterface::class)) {
+            self::markTestSkipped();
         }
 
         $request = new Request();
         $request->setRequestFormat('json');
-        $stack = new RequestStack();
-        $stack->push($request);
-        $factory = new RequestMetaFactory($stack, new TenantContext());
+        $subscriber = $this->createFactory($request);
 
-        $decorated = new class implements \ApiPlatform\GraphQl\Serializer\SerializerContextBuilderInterface {
-            public function create(array $attributes = [], bool $normalization = true, ?string $operationName = null): array
-            {
-                return [];
-            }
+        $paginator = new class([1,2,3]) extends \ArrayIterator implements PaginatorInterface {
+            public function getLastPage(): float { return 2; }
+            public function getTotalItems(): float { return 30; }
+            public function getCurrentPage(): float { return 1; }
+            public function getItemsPerPage(): float { return 15; }
         };
 
-        $builder = new ExtensionsMetaBuilder($decorated, $factory);
-        $context = $builder->create();
-        self::assertArrayHasKey('meta', $context['extensions']);
-        self::assertArrayHasKey('request_id', $context['extensions']['meta']);
+        $kernel = $this->createMock(HttpKernelInterface::class);
+        $event = new ViewEvent($kernel, $request, HttpKernelInterface::MAIN_REQUEST, $paginator);
+        $subscriber->onView($event);
+        $payload = json_decode($event->getResponse()->getContent(), true);
+        self::assertTrue($payload['meta']['pagination']['has_more']);
+        self::assertSame(30, $payload['meta']['pagination']['total']);
     }
 
-    public function testErrorEnvelope(): void
+    public function testValidationErrorEnvelope(): void
     {
         $request = new Request();
         $request->setRequestFormat('json');
-        $stack = new RequestStack();
-        $stack->push($request);
-        $factory = new RequestMetaFactory($stack, new TenantContext());
-        $subscriber = new EnvelopeExceptionSubscriber($factory);
+        $subscriber = $this->createFactory($request);
 
-        $kernel = $this->createMock(HttpKernelInterface::class);
-        $event = new ExceptionEvent($kernel, $request, HttpKernelInterface::MAIN_REQUEST, new \RuntimeException('boom'));
-        $subscriber($event);
+        $violation = new ConstraintViolation('msg', null, [], '', 'field', null, null, Assert\NotBlank::IS_BLANK_ERROR, null);
+        $list = new ConstraintViolationList([$violation]);
+        $exception = new ValidationFailedException('data', $list);
 
-        $data = json_decode($event->getResponse()->getContent(), true);
-        self::assertSame('error', $data['status']);
-        self::assertNull($data['data']);
-        self::assertNotEmpty($data['errors']);
+        $kernel = $this->createMock(KernelInterface::class);
+        $event = new ExceptionEvent($kernel, $request, HttpKernelInterface::MAIN_REQUEST, $exception);
+        $subscriber->onException($event);
+        $payload = json_decode($event->getResponse()->getContent(), true);
+        self::assertSame('error', $payload['status']);
+        self::assertNull($payload['data']);
+        self::assertSame('field', $payload['errors'][0]['field']);
+    }
+
+    public function testExceptionEnvelope(): void
+    {
+        $request = new Request();
+        $request->setRequestFormat('json');
+        $subscriber = $this->createFactory($request);
+
+        $kernel = $this->createMock(KernelInterface::class);
+        $event = new ExceptionEvent($kernel, $request, HttpKernelInterface::MAIN_REQUEST, new NotFoundHttpException('missing'));
+        $subscriber->onException($event);
+        $payload = json_decode($event->getResponse()->getContent(), true);
+        self::assertSame('error', $payload['status']);
+        self::assertSame(404, $event->getResponse()->getStatusCode());
+        self::assertNotEmpty($payload['errors']);
     }
 }

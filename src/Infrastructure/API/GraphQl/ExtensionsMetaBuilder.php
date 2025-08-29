@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\API\GraphQl;
 
 use ApiPlatform\GraphQl\Serializer\SerializerContextBuilderInterface;
-use App\Infrastructure\API\RequestMetaFactory;
+use App\Shared\Http\RequestMetaFactory;
 
 final class ExtensionsMetaBuilder implements SerializerContextBuilderInterface
 {

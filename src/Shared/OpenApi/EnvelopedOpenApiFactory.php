@@ -2,12 +2,14 @@
 
 declare(strict_types=1);
 
-namespace App\Infrastructure\API\OpenApi;
+namespace App\Shared\OpenApi;
 
 use ApiPlatform\OpenApi\Factory\OpenApiFactoryInterface;
 use ApiPlatform\OpenApi\OpenApi;
+use ApiPlatform\OpenApi\Model;
+use ArrayObject;
 
-final class EnvelopeDecorator implements OpenApiFactoryInterface
+final class EnvelopedOpenApiFactory implements OpenApiFactoryInterface
 {
     public function __construct(private OpenApiFactoryInterface $decorated)
     {
@@ -16,7 +18,8 @@ final class EnvelopeDecorator implements OpenApiFactoryInterface
     public function __invoke(array $context = []): OpenApi
     {
         $openApi = ($this->decorated)($context);
-        $schemas = $openApi->getComponents()->getSchemas();
+        $components = $openApi->getComponents();
+        $schemas = $components->getSchemas() ?: new ArrayObject();
 
         $schemas['Envelope'] = [
             'type' => 'object',
@@ -45,15 +48,42 @@ final class EnvelopeDecorator implements OpenApiFactoryInterface
                     'items' => [
                         'type' => 'object',
                         'properties' => [
-                            'message' => ['type' => 'string'],
                             'code' => ['type' => 'integer'],
+                            'message' => ['type' => 'string'],
+                            'field' => ['type' => 'string', 'nullable' => true],
+                            'details' => ['type' => 'string', 'nullable' => true],
                         ],
                     ],
                 ],
             ],
         ];
 
-        $openApi->getComponents()->setSchemas($schemas);
+        $components = $components->withSchemas($schemas);
+        $openApi = $openApi->withComponents($components);
+
+        foreach ($openApi->getPaths()->getPaths() as $pathItem) {
+            foreach (Model\PathItem::$methods as $method) {
+                $operation = $pathItem->{'get'.ucfirst(strtolower($method))}();
+                if (!$operation) {
+                    continue;
+                }
+                $responses = $operation->getResponses() ?? [];
+                foreach ($responses as $status => $response) {
+                    $content = $response->getContent();
+                    if (!$content || !isset($content['application/json'])) {
+                        continue;
+                    }
+                    $schema = $content['application/json']->getSchema();
+                    $wrapped = new ArrayObject([
+                        'allOf' => [
+                            ['$ref' => '#/components/schemas/Envelope'],
+                            ['properties' => ['data' => $schema]],
+                        ],
+                    ]);
+                    $content['application/json'] = $content['application/json']->withSchema($wrapped);
+                }
+            }
+        }
 
         return $openApi;
     }
