@@ -32,7 +32,11 @@ security:
   access_control:
     - { path: ^/api/login_check, roles: PUBLIC_ACCESS }
     - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
-
+# Configurații specifice pentru environment-uri
+when@dev:
+    security:
+        # Poți activa debugging pentru dev
+#        enable_authenticator_manager: true
 when@test:
   security:
     password_hashers:

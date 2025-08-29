@@ -1,9 +1,9 @@
 <?php
-
 declare(strict_types=1);
 
 namespace App\Infrastructure\API\GraphQl;
 
+use ApiPlatform\Metadata\GraphQl\Operation;
 use App\Shared\Http\RequestMetaFactory;
 
 if (interface_exists(\ApiPlatform\GraphQl\Serializer\SerializerContextBuilderInterface::class)) {
@@ -15,13 +15,18 @@ if (interface_exists(\ApiPlatform\GraphQl\Serializer\SerializerContextBuilderInt
         ) {
         }
 
-        public function create(array $attributes = [], bool $normalization = true, ?string $operationName = null): array
-        {
-            $context = $this->decorated->create($attributes, $normalization, $operationName);
+        public function create(
+            string $resourceClass,
+            Operation $operation,
+            array $resolverContext,
+            bool $normalization
+        ): array {
+            $context = $this->decorated->create($resourceClass, $operation, $resolverContext, $normalization);
+
+            // Adaugă meta informații din request-ul curent
             $context['extensions']['meta'] = $this->metaFactory->fromCurrentRequest();
 
             return $context;
         }
     }
 }
-
