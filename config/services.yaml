@@ -20,3 +20,6 @@ services:
     # please note that last definitions always *replace* previous ones
     App\Infrastructure\Monitoring\RequestIdProcessor:
         tags: ['monolog.processor']
+    App\Shared\Tenant\TenantContext:
+        public: true
+        shared: false
