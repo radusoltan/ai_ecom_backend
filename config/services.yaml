@@ -18,6 +18,7 @@ services:
         resource: '../src/'
         exclude:
             - '../src/Shared/Tenant/TenantId.php'
+            - '../src/Infrastructure/API/GraphQl/*'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
@@ -33,3 +34,6 @@ services:
         decorates: 'api_platform.doctrine.orm.state.collection_provider'
         decoration_on_invalid: ignore
         arguments: ['@?App\\Infrastructure\\API\\Pagination\\State\\CursorCollectionProvider.inner']
+
+# App\Infrastructure\Security\JWTCreatedListener:
+#   tags: [ { name: kernel.event_listener, event: lexik_jwt_authentication.on_jwt_created, method: onJWTCreated } ]

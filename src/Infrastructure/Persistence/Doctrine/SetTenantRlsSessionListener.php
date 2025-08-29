@@ -28,6 +28,11 @@ final class SetTenantRlsSessionListener
             return;
         }
 
+        $path = $event->getRequest()->getPathInfo();
+        if ($path === '/api/login_check' || $path === '/api/ping') {
+            return;
+        }
+
         $tenantId = $this->resolver->resolveOrFail();
         $tenant = $tenantId->toString();
 
