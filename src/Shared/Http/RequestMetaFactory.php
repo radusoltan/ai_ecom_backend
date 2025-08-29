@@ -2,19 +2,15 @@
 
 declare(strict_types=1);
 
-namespace App\Infrastructure\API;
+namespace App\Shared\Http;
 
-use App\Shared\Tenant\TenantContext;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Uid\Uuid;
 
 final class RequestMetaFactory
 {
-    public function __construct(
-        private RequestStack $requests,
-        private TenantContext $tenantContext
-    ) {}
+    public function __construct(private RequestStack $requests) {}
 
     public function fromRequest(Request $request): array
     {
@@ -27,15 +23,16 @@ final class RequestMetaFactory
         if (!$request instanceof Request) {
             $request = new Request();
         }
+
         return $this->build($request);
     }
 
     private function build(Request $request): array
     {
         $meta = [
-            'timestamp' => (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM),
-            'request_id' => $request->headers->get('X-Request-Id') ?? Uuid::v4()->toRfc4122(),
-            'tenant_id' => $this->tenantContext->has() ? $this->tenantContext->get()->toString() : null,
+            'timestamp' => (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format(\DateTimeInterface::ATOM),
+            'request_id' => $request->attributes->get('request_id') ?? Uuid::v4()->toRfc4122(),
+            'tenant_id' => $request->attributes->get('tenant_id'),
         ];
 
         if ($pagination = $request->attributes->get('pagination')) {

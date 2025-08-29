@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Functional;
 
-use App\Infrastructure\Http\ResponseEnvelope\ResponseEnvelopeListener;
 use App\Infrastructure\Persistence\Doctrine\Filter\TenantFilter;
 use App\Infrastructure\Persistence\Doctrine\SetTenantRlsSessionListener;
 use App\Infrastructure\Security\TenantContextResolver;
@@ -14,10 +13,10 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Query\FilterCollection;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
-use Symfony\Component\HttpKernel\Event\ResponseEvent;
+use Symfony\Component\HttpKernel\Event\ViewEvent;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\Uid\Uuid;
 
@@ -58,19 +57,22 @@ class SetTenantRlsSessionListenerTest extends TestCase
     public function testTenantContextAndResponseEnvelope(): void
     {
         $request = new Request([], [], [], [], [], ['HTTP_AUTHORIZATION' => 'Bearer token']);
+        $request->setRequestFormat('json');
         $uuid = Uuid::v4()->toRfc4122();
         [$context, $filter] = $this->handleRequest($uuid, $request);
+        $request->attributes->set('tenant_id', $uuid);
 
         self::assertTrue($context->has());
         self::assertSame($uuid, $context->get()->toString());
 
-        $response = new JsonResponse(['status' => 'ok', 'data' => null, 'meta' => [], 'errors' => []]);
         $kernel = $this->createMock(HttpKernelInterface::class);
-        $event = new ResponseEvent($kernel, $request, HttpKernelInterface::MAIN_REQUEST, $response);
-        $subscriber = new ResponseEnvelopeListener($context);
-        $subscriber($event);
-
-        $data = json_decode($response->getContent(), true);
+        $viewEvent = new ViewEvent($kernel, $request, HttpKernelInterface::MAIN_REQUEST, ['foo' => 'bar']);
+        $stack = new RequestStack();
+        $stack->push($request);
+        $factory = new \App\Shared\Http\RequestMetaFactory($stack);
+        $subscriber = new \App\Shared\Http\EnvelopeResponseSubscriber($factory, true);
+        $subscriber->onView($viewEvent);
+        $data = json_decode($viewEvent->getResponse()->getContent(), true);
         self::assertSame($uuid, $data['meta']['tenant_id']);
     }
 
