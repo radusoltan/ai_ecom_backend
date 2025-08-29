@@ -12,7 +12,7 @@ use Doctrine\Migrations\AbstractMigration;
  *
  * Helper SQL for manual bootstrap:
  *   -- Set default tenant for sessions without explicit tenant
- *   -- ALTER DATABASE <db_name> SET app.current_tenant TO '00000000-0000-0000-0000-000000000000';
+ *   -- ALTER DATABASE <db_name> SET app.tenant_id TO '00000000-0000-0000-0000-000000000000';
  *   -- Seed tenant for testing
  *   -- INSERT INTO tenants(id, slug, name, status, tier, config)
  *   -- VALUES ('00000000-0000-0000-0000-000000000000', 'demo', 'Demo', 'active', 'free', '{}');
@@ -45,16 +45,16 @@ CREATE TABLE tenants (
 SQL);
         $this->addSql('ALTER TABLE tenants ENABLE ROW LEVEL SECURITY');
         $this->addSql(<<<'SQL'
-CREATE POLICY tenants_select ON tenants FOR SELECT USING (id = current_setting('app.current_tenant')::uuid)
+CREATE POLICY tenants_select ON tenants FOR SELECT USING (id = current_setting('app.tenant_id')::uuid)
 SQL);
         $this->addSql(<<<'SQL'
-CREATE POLICY tenants_insert ON tenants FOR INSERT WITH CHECK (id = current_setting('app.current_tenant')::uuid)
+CREATE POLICY tenants_insert ON tenants FOR INSERT WITH CHECK (id = current_setting('app.tenant_id')::uuid)
 SQL);
         $this->addSql(<<<'SQL'
-CREATE POLICY tenants_update ON tenants FOR UPDATE USING (id = current_setting('app.current_tenant')::uuid) WITH CHECK (id = current_setting('app.current_tenant')::uuid)
+CREATE POLICY tenants_update ON tenants FOR UPDATE USING (id = current_setting('app.tenant_id')::uuid) WITH CHECK (id = current_setting('app.tenant_id')::uuid)
 SQL);
         $this->addSql(<<<'SQL'
-CREATE POLICY tenants_delete ON tenants FOR DELETE USING (id = current_setting('app.current_tenant')::uuid)
+CREATE POLICY tenants_delete ON tenants FOR DELETE USING (id = current_setting('app.tenant_id')::uuid)
 SQL);
         $this->addSql("COMMENT ON POLICY tenants_select ON tenants IS 'TODO: allow platform admin bypass';");
         $this->addSql("COMMENT ON POLICY tenants_insert ON tenants IS 'TODO: allow platform admin bypass';");
@@ -83,16 +83,16 @@ SQL);
         $this->addSql('CREATE INDEX idx_products_tenant_created_at ON products (tenant_id, created_at DESC)');
         $this->addSql('ALTER TABLE products ENABLE ROW LEVEL SECURITY');
         $this->addSql(<<<'SQL'
-CREATE POLICY products_select ON products FOR SELECT USING (tenant_id = current_setting('app.current_tenant')::uuid)
+CREATE POLICY products_select ON products FOR SELECT USING (tenant_id = current_setting('app.tenant_id')::uuid)
 SQL);
         $this->addSql(<<<'SQL'
-CREATE POLICY products_insert ON products FOR INSERT WITH CHECK (tenant_id = current_setting('app.current_tenant')::uuid)
+CREATE POLICY products_insert ON products FOR INSERT WITH CHECK (tenant_id = current_setting('app.tenant_id')::uuid)
 SQL);
         $this->addSql(<<<'SQL'
-CREATE POLICY products_update ON products FOR UPDATE USING (tenant_id = current_setting('app.current_tenant')::uuid) WITH CHECK (tenant_id = current_setting('app.current_tenant')::uuid)
+CREATE POLICY products_update ON products FOR UPDATE USING (tenant_id = current_setting('app.tenant_id')::uuid) WITH CHECK (tenant_id = current_setting('app.tenant_id')::uuid)
 SQL);
         $this->addSql(<<<'SQL'
-CREATE POLICY products_delete ON products FOR DELETE USING (tenant_id = current_setting('app.current_tenant')::uuid)
+CREATE POLICY products_delete ON products FOR DELETE USING (tenant_id = current_setting('app.tenant_id')::uuid)
 SQL);
 
         // Orders table
@@ -120,16 +120,16 @@ SQL);
         $this->addSql('CREATE INDEX idx_orders_tenant_created_at ON orders (tenant_id, created_at DESC)');
         $this->addSql('ALTER TABLE orders ENABLE ROW LEVEL SECURITY');
         $this->addSql(<<<'SQL'
-CREATE POLICY orders_select ON orders FOR SELECT USING (tenant_id = current_setting('app.current_tenant')::uuid)
+CREATE POLICY orders_select ON orders FOR SELECT USING (tenant_id = current_setting('app.tenant_id')::uuid)
 SQL);
         $this->addSql(<<<'SQL'
-CREATE POLICY orders_insert ON orders FOR INSERT WITH CHECK (tenant_id = current_setting('app.current_tenant')::uuid)
+CREATE POLICY orders_insert ON orders FOR INSERT WITH CHECK (tenant_id = current_setting('app.tenant_id')::uuid)
 SQL);
         $this->addSql(<<<'SQL'
-CREATE POLICY orders_update ON orders FOR UPDATE USING (tenant_id = current_setting('app.current_tenant')::uuid) WITH CHECK (tenant_id = current_setting('app.current_tenant')::uuid)
+CREATE POLICY orders_update ON orders FOR UPDATE USING (tenant_id = current_setting('app.tenant_id')::uuid) WITH CHECK (tenant_id = current_setting('app.tenant_id')::uuid)
 SQL);
         $this->addSql(<<<'SQL'
-CREATE POLICY orders_delete ON orders FOR DELETE USING (tenant_id = current_setting('app.current_tenant')::uuid)
+CREATE POLICY orders_delete ON orders FOR DELETE USING (tenant_id = current_setting('app.tenant_id')::uuid)
 SQL);
 
         // Stock items table
@@ -155,16 +155,16 @@ SQL);
         $this->addSql('CREATE INDEX idx_stock_items_product ON stock_items (product_id)');
         $this->addSql('ALTER TABLE stock_items ENABLE ROW LEVEL SECURITY');
         $this->addSql(<<<'SQL'
-CREATE POLICY stock_items_select ON stock_items FOR SELECT USING (tenant_id = current_setting('app.current_tenant')::uuid)
+CREATE POLICY stock_items_select ON stock_items FOR SELECT USING (tenant_id = current_setting('app.tenant_id')::uuid)
 SQL);
         $this->addSql(<<<'SQL'
-CREATE POLICY stock_items_insert ON stock_items FOR INSERT WITH CHECK (tenant_id = current_setting('app.current_tenant')::uuid)
+CREATE POLICY stock_items_insert ON stock_items FOR INSERT WITH CHECK (tenant_id = current_setting('app.tenant_id')::uuid)
 SQL);
         $this->addSql(<<<'SQL'
-CREATE POLICY stock_items_update ON stock_items FOR UPDATE USING (tenant_id = current_setting('app.current_tenant')::uuid) WITH CHECK (tenant_id = current_setting('app.current_tenant')::uuid)
+CREATE POLICY stock_items_update ON stock_items FOR UPDATE USING (tenant_id = current_setting('app.tenant_id')::uuid) WITH CHECK (tenant_id = current_setting('app.tenant_id')::uuid)
 SQL);
         $this->addSql(<<<'SQL'
-CREATE POLICY stock_items_delete ON stock_items FOR DELETE USING (tenant_id = current_setting('app.current_tenant')::uuid)
+CREATE POLICY stock_items_delete ON stock_items FOR DELETE USING (tenant_id = current_setting('app.tenant_id')::uuid)
 SQL);
     }
 

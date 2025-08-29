@@ -18,7 +18,7 @@ doctrine:
             Doctrine\\DBAL\\Platforms\\PostgreSQLPlatform: identity
         auto_mapping: true
         filters:
-            tenant:
+            tenant_filter:
                 class: App\Infrastructure\Persistence\Doctrine\Filter\TenantFilter
                 enabled: false
         mappings:
