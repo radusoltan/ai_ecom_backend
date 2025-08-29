@@ -72,6 +72,7 @@ final class EnvelopeResponseTest extends TestCase
         $payload = json_decode($event->getResponse()->getContent(), true);
         self::assertTrue($payload['meta']['pagination']['has_more']);
         self::assertSame(30, $payload['meta']['pagination']['total']);
+        self::assertSame(15, $payload['meta']['pagination']['limit']);
     }
 
     public function testValidationErrorEnvelope(): void

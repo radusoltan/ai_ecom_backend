@@ -62,6 +62,7 @@ final class EnvelopeResponseSubscriber implements EventSubscriberInterface
             $pagination = [
                 'cursor' => null,
                 'has_more' => $result->getCurrentPage() < $result->getLastPage(),
+                'limit' => (int) $result->getItemsPerPage(),
                 'total' => (int) $result->getTotalItems(),
             ];
             $request->attributes->set('pagination', $pagination);
@@ -90,8 +91,9 @@ final class EnvelopeResponseSubscriber implements EventSubscriberInterface
 
         $errors = [];
         if ($throwable instanceof HttpExceptionInterface) {
+            $code = $request->attributes->get('error_code', $statusCode);
             $errors[] = [
-                'code' => $statusCode,
+                'code' => $code,
                 'message' => $throwable->getMessage(),
             ];
         } elseif ($throwable instanceof ValidationFailedException) {
