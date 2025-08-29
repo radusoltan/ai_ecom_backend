@@ -19,7 +19,7 @@ stan:
 	vendor/bin/phpstan analyse -c phpstan.neon.dist
 
 serve:
-	symfony server:start -d
+	php bin/console server:start -d
 
 reset-db:
 	php bin/console doctrine:database:drop --if-exists --force
