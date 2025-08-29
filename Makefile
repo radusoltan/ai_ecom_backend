@@ -1,8 +1,8 @@
 .PHONY: init qa test fix cs stan serve reset-db
 
 init:
-	bin/console doctrine:database:create --if-not-exists
-	bin/console doctrine:migrations:migrate --no-interaction
+	php bin/console doctrine:database:create --if-not-exists
+	php bin/console doctrine:migrations:migrate --no-interaction
 
 qa: cs stan test
 
@@ -22,6 +22,6 @@ serve:
 	symfony server:start -d
 
 reset-db:
-	bin/console doctrine:database:drop --if-exists --force
-	bin/console doctrine:database:create --if-not-exists
-	bin/console doctrine:migrations:migrate --no-interaction
+	php bin/console doctrine:database:drop --if-exists --force
+	php bin/console doctrine:database:create --if-not-exists
+	php bin/console doctrine:migrations:migrate --no-interaction
