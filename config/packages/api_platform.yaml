@@ -14,5 +14,28 @@ api_platform:
     items_per_page: 20
     cache_headers:
       vary: ['Content-Type', 'Authorization']
+    extra_properties:
+      openapi_context:
+        parameters:
+          - in: query
+            name: cursor
+            schema: { type: string }
+            description: 'Opaque cursor for pagination'
+          - in: query
+            name: limit
+            schema: { type: integer }
+            description: 'Limit number of items (max 200)'
+          - in: query
+            name: include_total
+            schema: { type: boolean }
+            description: 'Include total item count'
+          - in: query
+            name: page
+            schema: { type: integer }
+            description: 'Page number for page/limit mode'
+          - in: query
+            name: per_page
+            schema: { type: integer }
+            description: 'Items per page for page/limit mode'
   swagger:
     versions: [3]

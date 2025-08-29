@@ -28,3 +28,8 @@ services:
     App\Shared\OpenApi\EnvelopedOpenApiFactory:
         decorates: 'api_platform.openapi.factory'
         arguments: ['@App\Shared\OpenApi\EnvelopedOpenApiFactory.inner']
+
+    App\Infrastructure\API\Pagination\State\CursorCollectionProvider:
+        decorates: 'api_platform.doctrine.orm.state.collection_provider'
+        decoration_on_invalid: ignore
+        arguments: ['@?App\\Infrastructure\\API\\Pagination\\State\\CursorCollectionProvider.inner']
