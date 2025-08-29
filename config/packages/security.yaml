@@ -3,23 +3,35 @@ security:
     Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
 
   providers:
-    app_user_provider:
-      id: App\Infrastructure\Security\UserProvider
+    app_in_memory:
+      memory:
+        users:
+          user@example.com: { password: '$2y$12$uvU3qudCZ7g2XNaZegOFcu90MrXicni7Ib2rzQWQoRuwUvV3RqNSy', roles: ['ROLE_USER'] }
+          admin@example.com: { password: '$2y$12$uvU3qudCZ7g2XNaZegOFcu90MrXicni7Ib2rzQWQoRuwUvV3RqNSy', roles: ['ROLE_ADMIN'] }
 
   firewalls:
     dev:
       pattern: ^/(_(profiler|wdt)|css|images|js)/
       security: false
-    api:
-      pattern: ^/(api|graphql)
+
+    login:
+      pattern: ^/api/login_check
       stateless: true
-      provider: app_user_provider
-      lazy: true
+      json_login:
+        check_path: /api/login_check
+        username_path: email
+        password_path: password
+        success_handler: lexik_jwt_authentication.handler.authentication_success
+        failure_handler: lexik_jwt_authentication.handler.authentication_failure
+
+    api:
+      pattern: ^/api
+      stateless: true
       jwt: ~
 
   access_control:
-    - { path: ^/(api|graphql), roles: PUBLIC_ACCESS, methods: [GET] }
-    - { path: ^/(api|graphql), roles: IS_AUTHENTICATED_FULLY }
+    - { path: ^/api/login_check, roles: PUBLIC_ACCESS }
+    - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
 
 when@test:
   security:
