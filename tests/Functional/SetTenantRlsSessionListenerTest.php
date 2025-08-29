@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\Functional;
 
 use App\Infrastructure\Http\ResponseEnvelope\ResponseEnvelopeListener;
-use App\Infrastructure\Http\Subscriber\TenantRequestSubscriber;
 use App\Infrastructure\Persistence\Doctrine\Filter\TenantFilter;
-use App\Infrastructure\Security\TenantResolver;
+use App\Infrastructure\Persistence\Doctrine\SetTenantRlsSessionListener;
+use App\Infrastructure\Security\TenantContextResolver;
 use App\Shared\Tenant\TenantContext;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -21,7 +21,7 @@ use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\Uid\Uuid;
 
-class TenantRequestSubscriberTest extends TestCase
+class SetTenantRlsSessionListenerTest extends TestCase
 {
     private function handleRequest(string $tenantId, Request $request): array
     {
@@ -30,7 +30,9 @@ class TenantRequestSubscriberTest extends TestCase
         $apiRepo = $this->createMock(\App\Shared\Tenant\ApiKeyRepository::class);
         $jwt = $this->createMock(\App\Shared\Tenant\JwtDecoder::class);
         $jwt->method('decodeFromHeader')->willReturn(['tenant_id' => $tenantId]);
-        $resolver = new TenantResolver($tenantRepo, $apiRepo, $jwt);
+        $stack = new \Symfony\Component\HttpFoundation\RequestStack();
+        $stack->push($request);
+        $resolver = new TenantContextResolver($tenantRepo, $apiRepo, $jwt, $stack, $context);
 
         $conn = $this->createMock(Connection::class);
         $conn->expects($this->once())
@@ -40,11 +42,11 @@ class TenantRequestSubscriberTest extends TestCase
         $em = $this->createMock(EntityManagerInterface::class);
         $filters = $this->createMock(FilterCollection::class);
         $tenantFilter = new TenantFilter($em);
-        $filters->expects($this->once())->method('enable')->with('tenant')->willReturn($tenantFilter);
+        $filters->expects($this->once())->method('enable')->with('tenant_filter')->willReturn($tenantFilter);
         $em->method('getFilters')->willReturn($filters);
         $em->method('getConnection')->willReturn($conn);
 
-        $listener = new TenantRequestSubscriber($resolver, $context, $em, $conn, new NullLogger());
+        $listener = new SetTenantRlsSessionListener($conn, $em, $resolver, new NullLogger());
 
         $kernel = $this->createMock(HttpKernelInterface::class);
         $event = new RequestEvent($kernel, $request, HttpKernelInterface::MAIN_REQUEST);
@@ -80,14 +82,16 @@ class TenantRequestSubscriberTest extends TestCase
         $apiRepo = $this->createMock(\App\Shared\Tenant\ApiKeyRepository::class);
         $jwt = $this->createMock(\App\Shared\Tenant\JwtDecoder::class);
         $jwt->method('decodeFromHeader')->willReturn([]);
-        $resolver = new TenantResolver($tenantRepo, $apiRepo, $jwt);
+        $stack = new \Symfony\Component\HttpFoundation\RequestStack();
+        $stack->push($request);
+        $resolver = new TenantContextResolver($tenantRepo, $apiRepo, $jwt, $stack, $context);
         $conn = $this->createMock(Connection::class);
         $em = $this->createMock(EntityManagerInterface::class);
-        $listener = new TenantRequestSubscriber($resolver, $context, $em, $conn, new NullLogger());
+        $listener = new SetTenantRlsSessionListener($conn, $em, $resolver, new NullLogger());
         $kernel = $this->createMock(HttpKernelInterface::class);
         $event = new RequestEvent($kernel, $request, HttpKernelInterface::MAIN_REQUEST);
 
-        $this->expectException(\Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException::class);
+        $this->expectException(\App\Shared\Tenant\TenantNotFoundException::class);
         $listener($event);
     }
 }

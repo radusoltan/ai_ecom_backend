@@ -2,6 +2,12 @@ framework:
     messenger:
         default_bus: command.bus
         buses:
-            command.bus: ~
-            query.bus: ~
-            event.bus: ~
+            command.bus:
+                middleware:
+                    - App\Infrastructure\Bus\AddTenantStampMiddleware
+            query.bus:
+                middleware:
+                    - App\Infrastructure\Bus\AddTenantStampMiddleware
+            event.bus:
+                middleware:
+                    - App\Infrastructure\Bus\AddTenantStampMiddleware

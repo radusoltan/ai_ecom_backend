@@ -4,10 +4,9 @@ This application scopes data per tenant using a Doctrine SQL filter and a Postgr
 
 ## Per-request flow
 
-1. `TenantRequestSubscriber` resolves the tenant (JWT claim, domain, subdomain, `X-API-Key`).
-2. The tenant id is stored in `TenantContext` and exposed in API responses under `meta.tenant_id`.
-3. Doctrine filter `tenant` is enabled and bound with the tenant id.
-4. The PostgreSQL connection executes `SET app.tenant_id = :tenant` to align with RLS policies.
+1. `TenantContextResolver` resolves the tenant (JWT claim, domain, subdomain, `X-API-Key`).
+2. `SetTenantRlsSessionListener` stores the tenant id in `TenantContext`, enables the `tenant_filter` and runs `SET app.tenant_id = :tenant` on the connection.
+3. API responses expose the tenant id under `meta.tenant_id`.
 
 ## Disabling the filter
 
@@ -20,7 +19,7 @@ php bin/console --tenant=<uuid>
 or disable the filter explicitly:
 
 ```php
-$em->getFilters()->disable('tenant');
+$em->getFilters()->disable('tenant_filter');
 ```
 
 Messenger workers must stamp messages with the tenant id and apply the filter before handling.
