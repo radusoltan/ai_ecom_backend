@@ -24,3 +24,6 @@ services:
         tags: ['monolog.processor']
     App\Shared\Tenant\TenantContext:
         public: true
+    App\Infrastructure\API\OpenApi\EnvelopeDecorator:
+        decorates: 'api_platform.openapi.factory'
+        arguments: ['@App\Infrastructure\API\OpenApi\EnvelopeDecorator.inner']

@@ -1,0 +1,4 @@
+api_platform:
+  graphql:
+    enabled: true
+    graphiql: '%kernel.debug%'

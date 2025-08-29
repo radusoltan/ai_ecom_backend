@@ -18,8 +18,8 @@ security:
       jwt: ~
 
   access_control:
-    - { path: ^/(api|graphql), roles: PUBLIC_ACCESS, methods: [GET] }
-    - { path: ^/(api|graphql), roles: IS_AUTHENTICATED_FULLY }
+    - { path: ^/(api|graphql), roles: PUBLIC_ACCESS, methods: [GET], rate_limiter: api_anonymous }
+    - { path: ^/(api|graphql), roles: IS_AUTHENTICATED_FULLY, rate_limiter: api_authenticated }
 
 when@test:
   security:

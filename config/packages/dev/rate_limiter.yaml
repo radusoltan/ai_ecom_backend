@@ -1,0 +1,11 @@
+framework:
+  rate_limiter:
+    api_anonymous:
+      policy: 'token_bucket'
+      limit: 100
+      rate: { interval: '1 minute', amount: 100 }
+      cache_pool: 'cache.app'
+    api_authenticated:
+      policy: 'token_bucket'
+      limit: 600
+      rate: { interval: '1 minute', amount: 600 }
