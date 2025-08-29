@@ -1,0 +1,6 @@
+services:
+  App\Infrastructure\API\GraphQl\ExtensionsMetaBuilder:
+    decorates: 'api_platform.graphql.serializer.context_builder'
+    arguments:
+      - '@App\Infrastructure\API\GraphQl\ExtensionsMetaBuilder.inner'
+      - '@App\Infrastructure\API\RequestMetaFactory'

@@ -1,13 +1,18 @@
 api_platform:
-    title: ECOM API
-    version: 1.0.0
-    defaults:
-        stateless: true
-        cache_headers:
-            vary: ['Content-Type', 'Authorization', 'Origin']
-        pagination_items_per_page: 50
-    formats:
-        jsonld: ['application/ld+json']
-        json: [ 'application/json' ]
-    swagger:
-        versions: [ 3 ]
+  title: 'E-Com API'
+  version: '1.0'
+  formats:
+    json: ['application/json']
+    jsonld: ['application/ld+json']
+  doctrine:
+    enabled: true
+  defaults:
+    pagination_enabled: true
+    pagination_type: 'cursor'
+    pagination_client_enabled: true
+    pagination_client_items_per_page: true
+    items_per_page: 20
+    cache_headers:
+      vary: ['Content-Type', 'Authorization']
+  swagger:
+    versions: [3]
