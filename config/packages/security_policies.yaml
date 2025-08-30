@@ -1,0 +1,4 @@
+parameters:
+    security.policies:
+        order.view: "is_granted('ROLE_MANAGER') or (user.id == subject.customerId)"
+        product.write: "is_granted('ROLE_MANAGER') and tenant(feature('catalog_write'))"

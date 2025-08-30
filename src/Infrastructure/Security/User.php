@@ -7,14 +7,22 @@ namespace App\Infrastructure\Security;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
-/**
- * Placeholder user model for future authentication implementation.
- */
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
+    public function __construct(
+        public string $id,
+        private array $roles = []
+    ) {
+    }
+
+    public function getId(): string
+    {
+        return $this->id;
+    }
+
     public function getRoles(): array
     {
-        return [];
+        return $this->roles;
     }
 
     public function getPassword(): ?string
@@ -24,11 +32,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getUserIdentifier(): string
     {
-        return 'anon';
+        return $this->id;
     }
 
     public function eraseCredentials(): void
     {
-        // noop
     }
 }
+
