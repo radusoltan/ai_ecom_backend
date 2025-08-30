@@ -1,5 +1,14 @@
 # ECOM API Backend
 
+## Quickstart
+
+```bash
+make bootstrap && make ci
+```
+
+See [docs/dev/commands.md](docs/dev/commands.md) for more commands.
+
+
 ## Foundation Setup
 
 ### Prerequisites
@@ -12,22 +21,17 @@
 ### Installation
 
 ```bash
-composer install
-make init
+make bootstrap
 ```
 
 ### Useful Commands
 
 | Command | Description |
 | --- | --- |
-| `make serve` | Start the Symfony web server |
-| `make init` | Create database and run migrations |
-| `make qa` | Run CS fixer, PHPStan and PHPUnit |
+| `make help` | List available targets |
+| `make db:migrate` | Run database migrations |
+| `make quality:cs` | Run code style checks |
 | `make test` | Run the test suite |
-| `make cs` | Run PHP-CS-Fixer in dry-run mode |
-| `make fix` | Apply PHP-CS-Fixer changes |
-| `make stan` | Run PHPStan static analysis |
-| `make reset-db` | Drop, create and migrate the database |
 
 ### Verify
 
