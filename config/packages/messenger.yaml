@@ -12,17 +12,19 @@ framework:
                     max_delay: 10000
         routing:
             'App\Application\Command\*': amqp_async
-            'App\Domain\Event\*': amqp_async
+            'App\\Domain\\Order\\Event\\OrderCreatedEvent': amqp_async
+            'App\\Domain\\Inventory\\Event\\InventoryReservedEvent': amqp_async
+            'App\\Domain\\Product\\Event\\ProductPriceChangedEvent': amqp_async
+            'App\\Domain\\Customer\\Event\\CustomerRegisteredEvent': amqp_async
+            'App\\Domain\\Return\\Event\\ReturnRequestedEvent': amqp_async
         buses:
             command.bus:
                 middleware:
                     - App\\Infrastructure\\Messenger\\TenantStampingMiddleware
             query.bus: ~
-            event.bus: ~
+            event.bus:
+                default_middleware: allow_no_handlers
+                middleware:
+                    - App\\Infrastructure\\Bus\\Middleware\\CorrelationMiddleware
+                    - App\\Infrastructure\\Bus\\Middleware\\PersistEventMiddleware
 
-when@test:
-    framework:
-        messenger:
-            buses:
-                command.bus:
-                    middleware: []

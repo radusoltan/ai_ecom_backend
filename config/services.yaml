@@ -24,8 +24,6 @@ services:
     # please note that last definitions always *replace* previous ones
     App\Infrastructure\Monitoring\RequestIdProcessor:
         tags: ['monolog.processor']
-    App\Shared\Tenant\TenantContext:
-        public: true
     App\Infrastructure\Messenger\TenantStampingMiddleware: ~
     App\Shared\OpenApi\EnvelopedOpenApiFactory:
         decorates: 'api_platform.openapi.factory'
@@ -48,6 +46,20 @@ services:
 
     App\Shared\Feature\FeatureFlagService:
         public: true
+
+    App\Shared\Tenant\TenantContextInterface:
+        alias: App\Shared\Tenant\FakeTenantContext
+
+    App\Infrastructure\Bus\Serializer\DomainEventNormalizer:
+        tags: ['serializer.normalizer']
+
+    App\Infrastructure\EventStore\Projection\OrderTimelineProjector:
+        tags:
+            - { name: 'app.projector', key: 'order_timeline' }
+
+    App\Infrastructure\Console\ReplayEventsCommand:
+        arguments:
+            $projectors: !tagged_iterator { tag: 'app.projector', index_by: 'key' }
 
 # App\Infrastructure\Security\JWTCreatedListener:
 #   tags: [ { name: kernel.event_listener, event: lexik_jwt_authentication.on_jwt_created, method: onJWTCreated } ]
