@@ -35,5 +35,12 @@ services:
         decoration_on_invalid: ignore
         arguments: ['@?App\\Infrastructure\\API\\Pagination\\State\\CursorCollectionProvider.inner']
 
+    App\Infrastructure\Security\PolicyEvaluator:
+        arguments:
+            $policies: '%security.policies%'
+
+    App\Shared\Feature\FeatureFlagService:
+        public: true
+
 # App\Infrastructure\Security\JWTCreatedListener:
 #   tags: [ { name: kernel.event_listener, event: lexik_jwt_authentication.on_jwt_created, method: onJWTCreated } ]
