@@ -1,0 +1,12 @@
+framework:
+  rate_limiter:
+    api_ip:
+      policy: sliding_window
+      limit: '%env(int:API_IP_LIMIT)%'
+      interval: '%env(string:API_IP_INTERVAL)%'
+    api_key:
+      policy: token_bucket
+      limit: '%env(int:API_KEY_LIMIT)%'
+      rate:
+        interval: '%env(string:API_KEY_RATE_INTERVAL)%'
+        amount: '%env(int:API_KEY_RATE_AMOUNT)%'
