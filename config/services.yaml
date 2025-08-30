@@ -39,6 +39,12 @@ services:
         arguments:
             $policies: '%security.policies%'
 
+    App\Shared\Http\RateLimitSubscriber:
+        arguments:
+            $ipLimiter: '@limiter.api_ip'
+            $apiKeyLimiter: '@limiter.api_key'
+        tags: ['kernel.event_subscriber']
+
     App\Shared\Feature\FeatureFlagService:
         public: true
 

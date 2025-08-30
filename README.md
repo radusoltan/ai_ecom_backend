@@ -32,3 +32,24 @@ make init
 ### Verify
 
 Once the server is running, visit `http://localhost:8000/api` to see the API Platform landing page and the `Tenant` resource.
+
+## Rate Limiting & CORS
+
+The API enforces rate limiting and strict CORS:
+
+- **Per IP**: `API_IP_LIMIT` requests per `API_IP_INTERVAL`.
+- **Per API key**: `API_KEY_LIMIT` requests per `API_KEY_RATE_INTERVAL` with bucket size `API_KEY_RATE_AMOUNT`.
+- **Allowed origins**: set `FRONTEND_ORIGINS` to a comma separated list of approved domains.
+
+Example `429 Too Many Requests` response:
+
+```json
+{
+  "status": "error",
+  "data": null,
+  "meta": { "timestamp": "2024-01-01T00:00:00+00:00", "request_id": "uuid", "tenant_id": null },
+  "errors": [ { "code": 429, "message": "Too Many Requests" } ]
+}
+```
+
+Use Symfony's `#[RateLimiter('api_ip')]` or `#[RateLimiter('api_key')]` attribute on a controller to override limits per route.
