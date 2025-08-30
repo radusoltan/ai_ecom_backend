@@ -53,3 +53,40 @@ Example `429 Too Many Requests` response:
 ```
 
 Use Symfony's `#[RateLimiter('api_ip')]` or `#[RateLimiter('api_key')]` attribute on a controller to override limits per route.
+
+## Messaging (AMQP)
+
+This project uses Symfony Messenger with RabbitMQ for asynchronous processing.
+
+### Start RabbitMQ
+
+```
+make mq-up
+```
+
+Set the transport DSN in `.env.local` if necessary. The default is:
+
+```
+MESSENGER_TRANSPORT_DSN=amqp://guest:guest@rabbitmq:5672/%2f/messages
+```
+
+### Initialize & Diagnostics
+
+```
+php bin/console messenger:setup-transports
+php bin/console app:messenger:diagnostics
+```
+
+### Run a Worker
+
+```
+make worker
+```
+
+### Send the sample command
+
+```
+php bin/console messenger:dispatch 'App\Application\Command\PingCommand' '{"messageId":"1","occurredAt":"2024-01-01T00:00:00+00:00","payload":{"ping":"pong"}}'
+```
+
+Use `make mq-down` to stop the broker and `make mq-reset` to recreate queues.

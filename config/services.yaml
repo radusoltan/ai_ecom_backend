@@ -26,6 +26,7 @@ services:
         tags: ['monolog.processor']
     App\Shared\Tenant\TenantContext:
         public: true
+    App\Infrastructure\Messenger\TenantStampingMiddleware: ~
     App\Shared\OpenApi\EnvelopedOpenApiFactory:
         decorates: 'api_platform.openapi.factory'
         arguments: ['@App\Shared\OpenApi\EnvelopedOpenApiFactory.inner']

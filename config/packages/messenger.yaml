@@ -1,13 +1,28 @@
 framework:
     messenger:
         default_bus: command.bus
+        failure_transport: failed
+        transports:
+            amqp_async:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                retry_strategy:
+                    delay: 1000
+                    max_retries: 5
+                    multiplier: 2
+                    max_delay: 10000
+        routing:
+            'App\Application\Command\*': amqp_async
+            'App\Domain\Event\*': amqp_async
         buses:
             command.bus:
                 middleware:
-                    - App\Infrastructure\Bus\AddTenantStampMiddleware
-            query.bus:
-                middleware:
-                    - App\Infrastructure\Bus\AddTenantStampMiddleware
-            event.bus:
-                middleware:
-                    - App\Infrastructure\Bus\AddTenantStampMiddleware
+                    - App\\Infrastructure\\Messenger\\TenantStampingMiddleware
+            query.bus: ~
+            event.bus: ~
+
+when@test:
+    framework:
+        messenger:
+            buses:
+                command.bus:
+                    middleware: []

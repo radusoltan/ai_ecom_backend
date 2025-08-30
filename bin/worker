@@ -1,0 +1,11 @@
+#!/usr/bin/env php
+<?php
+$_SERVER['argv'] = [
+    $_SERVER['argv'][0] ?? 'worker',
+    'messenger:consume',
+    'amqp_async',
+    '--time-limit=3600',
+    '--memory-limit=256M',
+    '--sleep=1000',
+];
+require __DIR__.'/console';
