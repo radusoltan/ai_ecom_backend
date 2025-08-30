@@ -10,11 +10,12 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
-use Symfony\Component\Uid\Uuid;
 
 final class RequestContextListener implements EventSubscriberInterface
 {
-    public function __construct(private TenantContext $tenantContext) {}
+    public function __construct(private TenantContext $tenantContext)
+    {
+    }
 
     public function onRequest(RequestEvent $event): void
     {
@@ -23,7 +24,6 @@ final class RequestContextListener implements EventSubscriberInterface
         }
 
         $request = $event->getRequest();
-        $request->attributes->set('request_id', Uuid::v4()->toRfc4122());
         if ($this->tenantContext->has()) {
             $request->attributes->set('tenant_id', $this->tenantContext->get()->toString());
         }

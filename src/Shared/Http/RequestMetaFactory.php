@@ -10,7 +10,9 @@ use Symfony\Component\Uid\Uuid;
 
 final class RequestMetaFactory
 {
-    public function __construct(private RequestStack $requests) {}
+    public function __construct(private RequestStack $requests)
+    {
+    }
 
     public function fromRequest(Request $request): array
     {
@@ -29,9 +31,15 @@ final class RequestMetaFactory
 
     private function build(Request $request): array
     {
+        $requestId = $request->attributes->get('request_id');
+        if (!$requestId) {
+            $requestId = Uuid::v4()->toRfc4122();
+            $request->attributes->set('request_id', $requestId);
+        }
+
         $meta = [
             'timestamp' => (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format(\DateTimeInterface::ATOM),
-            'request_id' => $request->attributes->get('request_id') ?? Uuid::v4()->toRfc4122(),
+            'request_id' => $requestId,
             'tenant_id' => $request->attributes->get('tenant_id'),
         ];
 
