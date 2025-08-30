@@ -1,4 +1,4 @@
-.PHONY: init qa test fix cs stan serve reset-db
+.PHONY: init qa test fix cs stan serve reset-db mq-up mq-down mq-reset worker
 
 init:
 	php bin/console doctrine:database:create --if-not-exists
@@ -22,6 +22,18 @@ serve:
 	php bin/console server:start -d
 
 reset-db:
-	php bin/console doctrine:database:drop --if-exists --force
-	php bin/console doctrine:database:create --if-not-exists
-	php bin/console doctrine:migrations:migrate --no-interaction
+        php bin/console doctrine:database:drop --if-exists --force
+        php bin/console doctrine:database:create --if-not-exists
+        php bin/console doctrine:migrations:migrate --no-interaction
+
+mq-up:
+        docker compose up -d rabbitmq
+
+mq-down:
+        docker compose rm -sf rabbitmq
+
+mq-reset:
+        php bin/console messenger:setup-transports --force
+
+worker:
+        php bin/worker
